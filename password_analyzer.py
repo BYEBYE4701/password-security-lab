@@ -75,7 +75,8 @@ if has_special:
     character_pool += len(special_characters) 
 
 print("Character pool size:", character_pool)
-print("Estimated entropy:", math.log2(character_pool) * len(password))
+entropy = math.log2(character_pool) * len(password)
+print("Estimated entropy:", entropy)
 
 if password.lower() in common_passwords:
     print("Warning: Password is a common password and is easily guessable. Please choose a more secure password.")
@@ -92,12 +93,59 @@ if has_repeated_characters:
     print("Warning: Password contains repeated characters.")
 
 has_sequence = False
+sequence_length = 1
 
 for i in range(len(password) - 1):
     difference = ord(password[i + 1]) - ord(password[i])
 
     if difference == 1 or difference == -1:
-        has_sequence = True
+        sequence_length += 1
+
+        if sequence_length >= 3:
+            has_sequence = True
+    else:
+        sequence_length = 1
 
 if has_sequence:
     print("Warning: Password contains sequential characters.")
+
+security_score = 0
+
+# Length
+if len(password) >= 20:
+    security_score += 3
+elif len(password) >= 14:
+    security_score += 2
+elif len(password) >= 10:
+    security_score += 1
+
+# Character diversity
+if has_lowercase:
+    security_score += 1
+
+if has_uppercase:
+    security_score += 1
+
+if has_digit:
+    security_score += 1
+
+if has_special:
+    security_score += 1
+
+# Entropy
+if entropy >= 60:
+    security_score += 1
+
+# Predictability penalties
+if password.lower() in common_passwords:
+    security_score -= 5
+
+if has_repeated_characters:
+    security_score -= 1
+
+if has_sequence:
+    security_score -= 1
+if security_score < 0:
+    security_score = 0
+
+print("Security score:", security_score)
