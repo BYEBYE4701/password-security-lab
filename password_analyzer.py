@@ -82,3 +82,22 @@ if password.lower() in common_passwords:
 
 if "1234" in password:
     print("Warning: Password contains a predictable number sequence.")
+
+has_repeated_characters = False
+for i in range(len(password) - 1):
+    if password[i] == password[i + 1]:
+        has_repeated_characters = True
+
+if has_repeated_characters:
+    print("Warning: Password contains repeated characters.")
+
+has_sequence = False
+
+for i in range(len(password) - 1):
+    difference = ord(password[i + 1]) - ord(password[i])
+
+    if difference == 1 or difference == -1:
+        has_sequence = True
+
+if has_sequence:
+    print("Warning: Password contains sequential characters.")
