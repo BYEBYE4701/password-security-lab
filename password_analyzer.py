@@ -16,6 +16,10 @@ common_passwords = [
 special_characters = "!@#$%^&*()-_=+[]{}|;:',.<>?/"
 
 
+# =================================
+# FUNCTIONS
+# =================================
+
 def check_character_types(password):
     has_uppercase = any(character.isupper() for character in password)
     has_lowercase = any(character.islower() for character in password)
@@ -45,9 +49,19 @@ def calculate_entropy(password, has_uppercase, has_lowercase, has_digit, has_spe
     return character_pool, entropy
 
 
+def estimate_crack_time(entropy):
+    guesses_per_second = 1_000_000_000
+
+    possible_combinations = 2 ** entropy
+    seconds = possible_combinations / guesses_per_second
+
+    return possible_combinations, seconds
+
+
 def check_common_password(password):
-    
     return password.lower() in common_passwords
+
+
 def check_common_password_pattern(password):
     password_lower = password.lower()
 
@@ -57,6 +71,31 @@ def check_common_password_pattern(password):
                 return common_password
 
     return None
+
+
+def check_character_substitution(password):
+    substitutions = {
+        "@": "a",
+        "4": "a",
+        "3": "e",
+        "1": "i",
+        "0": "o",
+        "$": "s",
+        "5": "s",
+        "7": "t"
+    }
+
+    normalized_password = password.lower()
+
+    for character, replacement in substitutions.items():
+        normalized_password = normalized_password.replace(character, replacement)
+
+    for common_password in common_passwords:
+        if normalized_password == common_password:
+            return common_password
+
+    return None
+
 
 def check_repeated_characters(password):
     for i in range(len(password) - 1):
@@ -149,43 +188,69 @@ def get_security_rating(security_score):
 # PASSWORD SECURITY LAB
 # =================================
 
-print("================================")
-print("     PASSWORD SECURITY LAB")
-print("================================")
+print()
+print("=" * 50)
+print("             PASSWORD SECURITY LAB")
+print("=" * 50)
 
-password = input("Enter a password: ")
+password = input("\nEnter a password: ")
 
-# Character checks
+
+# =================================
+# CHARACTER ANALYSIS
+# =================================
+
 has_uppercase, has_lowercase, has_digit, has_special = check_character_types(password)
 
-print("Password length:", len(password))
-print("Contains uppercase:", has_uppercase)
-print("Contains lowercase:", has_lowercase)
-print("Contains digit:", has_digit)
-print("Contains special character:", has_special)
+print()
+print("[ CHARACTER ANALYSIS ]")
+print("-" * 50)
+
+print(f"{'Length:':25}", len(password))
+print(f"{'Uppercase:':25}", "✓" if has_uppercase else "✗")
+print(f"{'Lowercase:':25}", "✓" if has_lowercase else "✗")
+print(f"{'Digits:':25}", "✓" if has_digit else "✗")
+print(f"{'Special characters:':25}", "✓" if has_special else "✗")
 
 
-# Security requirements
+# =================================
+# SECURITY REQUIREMENTS
+# =================================
+
+print()
+print("[ SECURITY REQUIREMENTS ]")
+print("-" * 50)
+
+requirements_met = True
+
 if len(password) < 10:
-    print("Password is too short. It should be at least 10 characters long.")
+    print("✗ Password must be at least 10 characters long.")
+    requirements_met = False
 
 if not has_uppercase:
-    print("Password should contain at least one uppercase letter.")
+    print("✗ Password should contain an uppercase letter.")
+    requirements_met = False
 
 if not has_lowercase:
-    print("Password should contain at least one lowercase letter.")
+    print("✗ Password should contain a lowercase letter.")
+    requirements_met = False
 
 if not has_digit:
-    print("Password should contain at least one digit.")
+    print("✗ Password should contain a digit.")
+    requirements_met = False
 
 if not has_special:
-    print("Password should contain at least one special character.")
+    print("✗ Password should contain a special character.")
+    requirements_met = False
 
-if len(password) >= 10 and has_uppercase and has_lowercase and has_digit and has_special:
-    print("Password meets all current security requirements.")
+if requirements_met:
+    print("✓ Password meets all current security requirements.")
 
 
-# Entropy
+# =================================
+# ENTROPY ANALYSIS
+# =================================
+
 character_pool, entropy = calculate_entropy(
     password,
     has_uppercase,
@@ -193,51 +258,109 @@ character_pool, entropy = calculate_entropy(
     has_digit,
     has_special
 )
-def estimate_crack_time(entropy):
-    guesses_per_second = 1_000_000_000
 
-    possible_combinations = 2 ** entropy
-    seconds = possible_combinations / guesses_per_second
+print()
+print("[ ENTROPY ANALYSIS ]")
+print("-" * 50)
 
-    return possible_combinations, seconds
-print("Character pool size:", character_pool)
-print("Estimated entropy:", entropy)
+print(f"{'Character pool:':25}", character_pool)
+print(f"{'Estimated entropy:':25}", f"{entropy:.2f} bits")
+
+
+# =================================
+# BRUTE-FORCE ESTIMATE
+# =================================
 
 possible_combinations, crack_time = estimate_crack_time(entropy)
 
-print("Possible combinations:", f"{possible_combinations:,.0f}")
+print()
+print("[ BRUTE-FORCE ESTIMATE ]")
+print("-" * 50)
+
+print(f"{'Possible combinations:':25}", f"{possible_combinations:,.0f}")
 
 if crack_time < 60:
-    print("Estimated brute-force crack time:", f"{crack_time:.2f}", "seconds")
-elif crack_time < 3600:
-    print("Estimated brute-force crack time:", f"{crack_time / 60:.2f}", "minutes")
-elif crack_time < 86400:
-    print("Estimated brute-force crack time:", f"{crack_time / 3600:.2f}", "hours")
-elif crack_time < 31536000:
-    print("Estimated brute-force crack time:", f"{crack_time / 86400:.2f}", "days")
-else:
-    print("Estimated brute-force crack time:", f"{crack_time / 31536000:,.2f}", "years")
+    print(
+        f"{'Estimated crack time:':25}",
+        f"{crack_time:.2f} seconds"
+    )
 
-# Password analysis
+elif crack_time < 3600:
+    print(
+        f"{'Estimated crack time:':25}",
+        f"{crack_time / 60:.2f} minutes"
+    )
+
+elif crack_time < 86400:
+    print(
+        f"{'Estimated crack time:':25}",
+        f"{crack_time / 3600:.2f} hours"
+    )
+
+elif crack_time < 31536000:
+    print(
+        f"{'Estimated crack time:':25}",
+        f"{crack_time / 86400:.2f} days"
+    )
+
+else:
+    print(
+        f"{'Estimated crack time:':25}",
+        f"{crack_time / 31536000:,.2f} years"
+    )
+
+
+# =================================
+# PREDICTABILITY ANALYSIS
+# =================================
+
 is_common_password = check_common_password(password)
+common_password_pattern = check_common_password_pattern(password)
+substitution_pattern = check_character_substitution(password)
 has_repeated_characters = check_repeated_characters(password)
 has_sequence = check_sequences(password)
-common_password_pattern = check_common_password_pattern(password)
 
+print()
+print("[ PREDICTABILITY ANALYSIS ]")
+print("-" * 50)
+
+warnings_found = False
 
 if is_common_password:
-    print("Warning: Password is a common password and is easily guessable. Please choose a more secure password.")
+    print("✗ Common password detected.")
+    warnings_found = True
+
 if common_password_pattern:
-    print("Warning: Password is based on the common password:", common_password_pattern)
+    print(
+        "✗ Password is based on the common password:",
+        common_password_pattern
+    )
+    warnings_found = True
+
+if substitution_pattern:
+    print(
+        "✗ Predictable character substitutions detected.",
+        "Based on:",
+        substitution_pattern
+    )
+    warnings_found = True
 
 if has_repeated_characters:
-    print("Warning: Password contains repeated characters.")
+    print("✗ Repeated characters detected.")
+    warnings_found = True
 
 if has_sequence:
-    print("Warning: Password contains sequential characters.")
+    print("✗ Sequential characters detected.")
+    warnings_found = True
+
+if not warnings_found:
+    print("✓ No common predictable patterns detected.")
 
 
-# Security score
+# =================================
+# SECURITY SCORE
+# =================================
+
 security_score = calculate_security_score(
     password,
     has_uppercase,
@@ -250,10 +373,16 @@ security_score = calculate_security_score(
     has_sequence
 )
 
-print("Security score:", security_score, "/ 10")
-
-
-# Security rating
 rating = get_security_rating(security_score)
 
-print("Security rating:", rating)
+print()
+print("[ FINAL RESULT ]")
+print("-" * 50)
+
+print(f"{'Security score:':25}", f"{security_score} / 10")
+print(f"{'Security rating:':25}", rating)
+
+print()
+print("=" * 50)
+print("              ANALYSIS COMPLETE")
+print("=" * 50)
